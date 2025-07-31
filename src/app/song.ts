@@ -1,3 +1,5 @@
+import { songStore } from "@ui/stores/songStore";
+
 async function getData() {
     //const url = "/songs/cerror_-_je_vader.xm";
     //const url = "/songs/DEADLOCK.XM";
@@ -28,6 +30,10 @@ async function getData() {
 
         const id = await getText(0, 17);
         const moduleName = await getText(17, 20);
+        const trackerName = await getText(38, 20);
+
+        songStore.title = moduleName;
+        songStore.trackerName = trackerName;
 
         // console.log("Bytes: ", bytes);
         console.log(id, moduleName);
