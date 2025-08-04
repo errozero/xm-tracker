@@ -71,36 +71,31 @@ async function getData() {
         const patterns = [];
 
         //const firstPatternOffset = 80 + 256;
-        const firstPatternOffset = 60 + headerSize;
+        let patternOffset = 60 + headerSize;
 
-        let o = firstPatternOffset;
+        //Patterns
         for (let i = 0; i < patternCount; i++) {
-            const patternHeaderLength = await getWord(o, 4);
-            const numRows = await getWord(o + 5, 2);
-            const packedPatternDataSize = await getWord(o + 7, 2);
+            const patternHeaderLength = await getWord(patternOffset, 4);
+            const numRows = await getWord(patternOffset + 5, 2);
+            const packedPatternDataSize = await getWord(patternOffset + 7, 2);
+            const nextPatternOffset = patternOffset + patternHeaderLength + packedPatternDataSize;
 
-            // const data:[][] = [];
-            // for(let ch=0; ch<channelCount; ch++){
-            //     data.push([]);
-            // }
-
-            const dataBytes = await getBytes(o + patternHeaderLength, packedPatternDataSize);
+            const dataBytes = await getBytes(
+                patternOffset + patternHeaderLength,
+                packedPatternDataSize
+            );
             const data = [];
             let byteIndex = 0;
 
             //Rows
             for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
                 data.push([]);
-
                 const rowData: number[][] = data[rowIndex];
 
                 //Channels / Columns
                 for (let chIndex = 0; chIndex < channelCount; chIndex++) {
-                    //
                     const chData: number[] = [];
-
                     const byte = dataBytes[byteIndex++];
-
                     const note = byte & 1 ? dataBytes[byteIndex++] : 0;
                     const instrument = byte & (1 << 1) ? dataBytes[byteIndex++] : 0;
                     const volume = byte & (1 << 2) ? dataBytes[byteIndex++] : 0;
@@ -117,22 +112,11 @@ async function getData() {
                 }
             }
 
-            const pattern = {
-                patternHeaderLength,
-                numRows,
-                packedPatternDataSize,
-                data,
-            };
-
             patterns.push(data);
+
+            patternOffset = nextPatternOffset;
         }
 
-        // songStore.title = moduleName;
-        // songStore.trackerName = trackerName;
-        // songStore.versionNumber = `${versionNumber[0] & 0xff}.${(versionNumber[5] >> 8) & 0xff}`;
-        // songStore.headerSize = headerSize.toString();
-
-        // console.log("Bytes: ", bytes);
         console.log(id, moduleName);
         console.log(versionNumber[1], versionNumber[0]);
         console.log("HeaderSize:", headerSize);
@@ -145,60 +129,7 @@ async function getData() {
         console.log("Default tempo", defaultTempo);
         console.log("Default BPM", defaultBpm);
         console.log("Pattern Order Table", patternOrderTable);
-        console.log("Patterns", patterns[0]);
-
-        // const data = patterns[0].data;
-        // const patterns2 = [];
-
-        // const pat = [];
-        // patterns2.push(pat);
-        // let row: [];
-        // let pdi = 0;
-        // let ci = 0;
-        // //let actualNumberOfRows = 0;
-        // while (pdi < data.length) {
-        //     // start row if necessary
-        //     if (ci == 0) {
-        //         row = [];
-        //         pat.push(row);
-        //     }
-        //     // decode note
-        //     const note = [];
-        //     row.push(note);
-        //     if (data[pdi] & 0x80) {
-        //         const col = data[pdi++];
-        //         if (col & 1) {
-        //             const noteNum = data[pdi++];
-        //             note.push(noteNum);
-        //         } else {
-        //             note.push(0);
-        //         }
-        //         for (let x = 1; x < 5; x++) {
-        //             if (col & (1 << x)) {
-        //                 const cell = data[pdi++];
-        //                 note.push(cell);
-        //             } else {
-        //                 note.push(0);
-        //             }
-        //         }
-        //     } else {
-        //         const noteNum = data[pdi++];
-        //         note.push(noteNum);
-        //         for (let x = 1; x < 5; x++) {
-        //             const cell = data[pdi++];
-        //             note.push(cell);
-        //         }
-        //     }
-        //     // end row if necessary
-        //     ci++;
-        //     if (ci == channelCount) {
-        //         ci = 0;
-        //     }
-        // }
-
-        //console.log(">>", patterns2);
-
-        // return bytes;
+        console.log("Patterns", patterns);
     } catch (error: any) {
         console.error(error.message);
     }
